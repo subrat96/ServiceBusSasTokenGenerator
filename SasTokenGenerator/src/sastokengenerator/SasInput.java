@@ -50,9 +50,11 @@ public class SasInput extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         taSasKey = new javax.swing.JTextArea();
         jLabel6 = new javax.swing.JLabel();
+        lblError = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SAS Token Generator");
+        setBackground(new java.awt.Color(255, 255, 255));
         setResizable(false);
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
@@ -106,6 +108,9 @@ public class SasInput extends javax.swing.JFrame {
         jLabel6.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         jLabel6.setText("SAS Connection URI");
 
+        lblError.setFont(new java.awt.Font("Comic Sans MS", 0, 18)); // NOI18N
+        lblError.setForeground(new java.awt.Color(255, 51, 51));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -135,13 +140,14 @@ public class SasInput extends javax.swing.JFrame {
                         .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(56, 56, 56)
                         .addComponent(tfKey))
+                    .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(58, 58, 58)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 284, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(tfValidity))))
-                .addGap(77, 80, Short.MAX_VALUE))
+                .addContainerGap(80, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -166,13 +172,15 @@ public class SasInput extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tfValidity, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblError, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel6)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24))
+                .addGap(67, 67, 67))
         );
 
         pack();
@@ -180,22 +188,50 @@ public class SasInput extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
+        lblError.setText("");
         taSasKey.setText("");
-        String nameSpace = tfServiceBusNameSpace.getText().toString();
+        String nameSpace = tfServiceBusNameSpace.getText().toString().trim();
+        if(nameSpace==null || nameSpace.length()==0){
+            lblError.setText("Service Bus Namespace value can't be empty");
+            return;
+        }
+        String queuName = tfQueueName.getText().toString().trim();
+        if(queuName==null || queuName.length()==0){
+            lblError.setText("Queue Name can't be empty");
+            return;
+        }
+        String key = tfKey.getText().toString().trim();
+        if(key==null || key.length()==0){
+            lblError.setText("Policy Name can't be empty");
+            return;
+        }
+        String keyName = tfKeyName.getText().toString().trim();
+        if(keyName==null || keyName.length()==0){
+            lblError.setText("Key (Pri/Sec) can't be empty");
+            return;
+        }
+        String validy_string = tfValidity.getText().toString().trim();
+        if(validy_string==null || validy_string.length()==0){
+            lblError.setText("Validity can't be empty");
+            return;
+        }
         
-        String queuName = tfQueueName.getText().toString();
-        String key = tfKey.getText().toString();
-        String keyName = tfKeyName.getText().toString();
-        long validity = Long.parseLong(tfValidity.getText().toString())*60;
+        try{
+            long validity = Long.parseLong(validy_string)*60;
+            String queue = "sb://" + nameSpace + "/" + queuName;
+            String queueWithSas = queue + "?" + getSASToken(keyName, key, nameSpace, validity);
+            taSasKey.setText(queueWithSas);
+        }catch(Exception ex){
+            lblError.setText(ex.toString());
+        }
         
-        String queue = "sb://" + nameSpace + "/" + queuName;
-        String queueWithSas = queue + "?" + getSASToken(keyName, key, nameSpace, validity);
         
-        taSasKey.setText(queueWithSas);
+        
 
     }//GEN-LAST:event_jButton1ActionPerformed
     public static String getSASToken(String keyName, String key, String resourceUri, long expireDuration) 
     {
+        
 	long epoch = System.currentTimeMillis() / 1000L;
 	String expiry = Long.toString(epoch + expireDuration);
 
@@ -289,6 +325,7 @@ public class SasInput extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblError;
     private javax.swing.JTextArea taSasKey;
     private javax.swing.JTextField tfKey;
     private javax.swing.JTextField tfKeyName;
